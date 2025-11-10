@@ -17,6 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
+        activityCard.dataset.activity = name;
+        activityCard.dataset.max = details.max_participants;
 
         const spotsLeft = details.max_participants - details.participants.length;
 
@@ -24,8 +26,26 @@ document.addEventListener("DOMContentLoaded", () => {
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <p class="availability"><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <h5 class="participants-title">Participants</h5>
         `;
+
+        // Participants list or empty state
+        if (details.participants && details.participants.length > 0) {
+          const ul = document.createElement("ul");
+          ul.className = "participants";
+          details.participants.forEach((email) => {
+            const li = document.createElement("li");
+            li.textContent = email;
+            ul.appendChild(li);
+          });
+          activityCard.appendChild(ul);
+        } else {
+          const p = document.createElement("p");
+          p.className = "participants-empty";
+          p.textContent = "No participants yet.";
+          activityCard.appendChild(p);
+        }
 
         activitiesList.appendChild(activityCard);
 
@@ -60,11 +80,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        messageDiv.className = "message success";
         signupForm.reset();
+
+        // Update the corresponding activity card: add participant + update availability
+        const cards = document.querySelectorAll(".activity-card");
+        cards.forEach((card) => {
+          if (card.dataset.activity === activity) {
+            // ensure participants list exists
+            let ul = card.querySelector(".participants");
+            if (!ul) {
+              const empty = card.querySelector(".participants-empty");
+              if (empty) empty.remove();
+              ul = document.createElement("ul");
+              ul.className = "participants";
+              card.appendChild(ul);
+            }
+            const li = document.createElement("li");
+            li.textContent = email;
+            ul.appendChild(li);
+
+            // Recalculate availability using data-max and current participants count
+            const max = parseInt(card.dataset.max, 10) || 0;
+            const current = card.querySelectorAll(".participants li").length;
+            const avail = card.querySelector(".availability");
+            if (avail) {
+              const spots = Math.max(0, max - current);
+              avail.innerHTML = `<strong>Availability:</strong> ${spots} spots left`;
+            }
+          }
+        });
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        messageDiv.className = "message error";
       }
 
       messageDiv.classList.remove("hidden");
@@ -75,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 5000);
     } catch (error) {
       messageDiv.textContent = "Failed to sign up. Please try again.";
-      messageDiv.className = "error";
+      messageDiv.className = "message error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
     }
