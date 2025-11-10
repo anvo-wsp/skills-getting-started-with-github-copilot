@@ -152,10 +152,16 @@ footer {
   letter-spacing: 0.04em;
 }
 
+
 .participants {
-  list-style: disc inside;
+  list-style: none;
   margin: 0 0 10px 0;
-  padding-left: 14px;
+  padding-left: 0;
+}
+
+.participants.no-bullets {
+  list-style: none;
+  padding-left: 0;
 }
 
 .participants li {

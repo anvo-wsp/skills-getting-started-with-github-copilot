@@ -33,10 +33,20 @@ document.addEventListener("DOMContentLoaded", () => {
         // Participants list or empty state
         if (details.participants && details.participants.length > 0) {
           const ul = document.createElement("ul");
-          ul.className = "participants";
+          ul.className = "participants no-bullets";
           details.participants.forEach((email) => {
             const li = document.createElement("li");
-            li.textContent = email;
+            // Use a span for the email so the delete icon can be styled separately
+            const emailSpan = document.createElement("span");
+            emailSpan.textContent = email;
+            li.appendChild(emailSpan);
+            const deleteIcon = document.createElement("span");
+            deleteIcon.textContent = "🗑️";
+            deleteIcon.title = "Unregister participant";
+            deleteIcon.style.cursor = "pointer";
+            deleteIcon.style.marginLeft = "8px";
+            deleteIcon.onclick = () => unregisterParticipant(name, email);
+            li.appendChild(deleteIcon);
             ul.appendChild(li);
           });
           activityCard.appendChild(ul);
@@ -93,11 +103,20 @@ document.addEventListener("DOMContentLoaded", () => {
               const empty = card.querySelector(".participants-empty");
               if (empty) empty.remove();
               ul = document.createElement("ul");
-              ul.className = "participants";
+              ul.className = "participants no-bullets";
               card.appendChild(ul);
             }
             const li = document.createElement("li");
-            li.textContent = email;
+            const emailSpan = document.createElement("span");
+            emailSpan.textContent = email;
+            li.appendChild(emailSpan);
+            const deleteIcon = document.createElement("span");
+            deleteIcon.textContent = "🗑️";
+            deleteIcon.title = "Unregister participant";
+            deleteIcon.style.cursor = "pointer";
+            deleteIcon.style.marginLeft = "8px";
+            deleteIcon.onclick = () => unregisterParticipant(activity, email);
+            li.appendChild(deleteIcon);
             ul.appendChild(li);
 
             // Recalculate availability using data-max and current participants count
@@ -128,6 +147,24 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Function to unregister a participant
+  async function unregisterParticipant(activityName, participantEmail) {
+    try {
+      const response = await fetch(`/activities/${activityName}/participants/${participantEmail}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        messageDiv.textContent = `${participantEmail} has been unregistered from ${activityName}.`;
+        fetchActivities(); // Refresh the activities list
+      } else {
+        messageDiv.textContent = 'Failed to unregister participant.';
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      messageDiv.textContent = 'An error occurred while unregistering the participant.';
+    }
+  }
 
   // Initialize app
   fetchActivities();
